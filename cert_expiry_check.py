@@ -6,9 +6,11 @@ import datetime
 import smtplib
 from email.message import EmailMessage
 from email.headerregistry import Address
-from OpenSSL import crypto
 from pathlib import Path
 from operator import itemgetter
+
+import click
+from OpenSSL import crypto
 
 
 def get_client_list(path="/home/ansible/clientlist.yaml"):
@@ -93,8 +95,33 @@ def send_expire_notices(
             send_email(create_email_warning(c), really_send)
 
 
-def main():
-    cl = get_client_list()
-    discover_expiry_times(cl)
+@click.command()
+@click.option(
+    "--clientlist",
+    metavar="<yaml list of clients>",
+    show_default=True,
+    type=click.Path(exists=True, readable=True, dir_okay=False),
+    default="/home/ansible/clientlist.yaml",
+)
+@click.option(
+    "--certpath",
+    metavar="<path to certificate directory>",
+    show_default=True,
+    type=click.Path(file_okay=False),
+    default="/home/ansible/data/easyrsa3/pki/issued",
+)
+@click.option("--maxdays", type=click.INT, default=31, show_default=True)
+@click.option("--really-send", is_flag=True)
+@click.option("--verbose/--quiet")
+def main(clientlist, certpath, maxdays, really_send, verbose):
+    cl = get_client_list(clientlist)
+    discover_expiry_times(cl, certpath)
     cl = sorted(cl, key=itemgetter("expdate"))
-    send_expire_notices(cl)
+    send_expire_notices(
+        cl, maxdays=maxdays, verbose=verbose,
+        really_send=really_send,
+    )
+
+
+if __name__ == "__main__":
+    main()
