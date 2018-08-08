@@ -112,7 +112,7 @@ def send_expire_notices(
 )
 @click.option("--maxdays", type=click.INT, default=31, show_default=True)
 @click.option("--really-send", is_flag=True)
-@click.option("--verbose/--quiet")
+@click.option("--verbose/--quiet", default=True)
 def main(clientlist, certpath, maxdays, really_send, verbose):
     cl = get_client_list(clientlist)
     discover_expiry_times(cl, certpath)
